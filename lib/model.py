@@ -74,18 +74,22 @@ class event(jt_record):
     def __init__(self, row_id=None, **kwargs):
         jt_record.__init__(self, "event", row_id, **kwargs)
 
-    def get_parents(self):
+    def _get_members(self, col1, col2):
         res = []
-        SQL = "SELECT (parent) FROM event_map WHERE child=?"
+        SQL = "SELECT (%s) FROM event_map WHERE %s=?" % (col1, col2)
         cur = self.conn.cursor()
         cur.execute(SQL, [self.id])
-        for e in range(cur.arraysize):
-            res.append(event(cur.fetchone()[0]))
+        ids = cur.fetchall()
+        for e in ids:
+            res.append(event(e[0]))
         cur.close()
         return res
 
+    def get_parents(self):
+        return self._get_members("parent", "child")
+
     def get_children(self):
-        pass
+        return self._get_members("child", "parent")
 
 class commitment(jt_record):
 
@@ -93,4 +97,16 @@ class commitment(jt_record):
         jt_record.__init__(self, "commitment", row_id, **kwargs)
 
     def get_events(self):
-        pass
+        res = []
+        SQL = "SELECT event_id FROM commitment_map WHERE id=?"
+        cur = self.conn.cursor()
+        cur.execute(SQL, [self.id])
+        ids = cur.fetchall()
+        for e in ids:
+             res.append(event(e[0]))
+        cur.close()
+        return res
+
+
+
+
