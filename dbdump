@@ -1,0 +1,37 @@
+PRAGMA foreign_keys=ON;
+BEGIN TRANSACTION;
+
+CREATE TABLE event (
+id integer constraint pk primary key asc autoincrement constraint nn not null constraint uq unique,
+name text constraint nn not null,
+date integer constraint df default null,
+duration integer constraint df default null,
+recurrence text constraint df default null,
+earliest integer constraint df default null,
+latest integer constraint df default null);
+INSERT INTO "event" VALUES(1,'lightsout',1380488400,21600,'86400,86400,86400,86400,259200',NULL,NULL);
+INSERT INTO "event" VALUES(2,'morning routine',1380513600,7200,'86400,86400,86400,86400,259200',NULL,NULL);
+INSERT INTO "event" VALUES(3,'clear kitchen',NULL,600,'',NULL,NULL);
+INSERT INTO "event" VALUES(4,'eat breakfast',NULL,1200,'',NULL,NULL);
+INSERT INTO "event" VALUES(5,'wash',NULL,1200,'',NULL,NULL);
+INSERT INTO "event" VALUES(6,'set brakfast',NULL,600,'',NULL,NULL);
+INSERT INTO "event" VALUES(7,'excercise',NULL,1800,'',NULL,NULL);
+INSERT INTO "event" VALUES(8,'start breakfast',NULL,300,'',NULL,NULL);
+INSERT INTO "event" VALUES(9,'quicken',NULL,900,'',NULL,NULL);
+
+CREATE TABLE map (
+parent INTEGER CONSTRAINT nn NOT NULL CONSTRAINT un UNIQUE REFERENCES event(id) ON DELETE CASCADE,
+child INTEGER CONSTRAINT nn NOT NULL CONSTRAINT un UNIQUE REFERENCES event(id) ON DELETE CASCADE);
+INSERT INTO "map" VALUES(2,3);
+INSERT INTO "map" VALUES(3,4);
+INSERT INTO "map" VALUES(4,5);
+INSERT INTO "map" VALUES(5,6);
+INSERT INTO "map" VALUES(6,7);
+INSERT INTO "map" VALUES(7,8);
+INSERT INTO "map" VALUES(8,9);
+
+DELETE FROM sqlite_sequence;
+INSERT INTO "sqlite_sequence" VALUES('events',9);
+
+COMMIT;
+
