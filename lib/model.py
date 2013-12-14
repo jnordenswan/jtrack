@@ -1,7 +1,18 @@
+from sqlite3 import connect
+
+connection = None
+
+def connect_db(file_path):
+    global connection
+    connection = connect(file_path)
+
+def close_db():
+    connection.close()
+
 class jt_record(object):
 
-    def __init__(self, db_connection, tablename, row_id=None, **kwargs):
-        object.__setattr__(self, "conn", db_connection)
+    def __init__(self, tablename, row_id=None, **kwargs):
+        object.__setattr__(self, "conn", connection)
         object.__setattr__(self, "table", tablename)
         object.__setattr__(self, "id", row_id)
         if self.id: self._check_record_exists()
@@ -57,3 +68,29 @@ class jt_record(object):
         cur.execute(SQL, [self.id])
         self.conn.commit()
         cur.close()
+
+class event(jt_record):
+
+    def __init__(self, row_id=None, **kwargs):
+        jt_record.__init__(self, "event", row_id, **kwargs)
+
+    def get_parents(self):
+        res = []
+        SQL = "SELECT (parent) FROM event_map WHERE child=?"
+        cur = self.conn.cursor()
+        cur.execute(SQL, [self.id])
+        for e in range(cur.arraysize):
+            res.append(event(cur.fetchone()[0]))
+        cur.close()
+        return res
+
+    def get_children(self):
+        pass
+
+class commitment(jt_record):
+
+    def __init__(self, row_id=None, **kwargs):
+        jt_record.__init__(self, "commitment", row_id, **kwargs)
+
+    def get_events(self):
+        pass

@@ -1,4 +1,4 @@
 jtrack
 ======
 
-Minimalist task dependency tracker and calendar
+Minimalist event dependency tracker and calendar/planner
