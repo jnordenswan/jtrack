@@ -32,7 +32,7 @@ class jt_record(object):
 
     def _insert_new_record(self, kwargs):
         SQL = "INSERT INTO %s %s VALUES %s"
-        keys_str = str(tuple(kwargs.keys()))
+        keys_str = "('%s')" % "', '".join(kwargs.keys())
         values = tuple(kwargs.values())
         vals_str = "(%s)" % ", ".join(len(values)*("?"))
         SQL = SQL % (self.table, keys_str, vals_str)
