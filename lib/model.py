@@ -1,4 +1,6 @@
 from sqlite3 import connect
+import time
+import calendar
 
 connection = None
 
@@ -9,104 +11,56 @@ def connect_db(file_path):
 def close_db():
     connection.close()
 
-class jt_record(object):
-
-    def __init__(self, tablename, row_id=None, **kwargs):
-        object.__setattr__(self, "conn", connection)
-        object.__setattr__(self, "table", tablename)
-        object.__setattr__(self, "id", row_id)
-        if self.id: self._check_record_exists()
-        else: self._insert_new_record(kwargs)
+class Node(object):
+    def __init__(self, nid=None, ntype=None, ndata=None, nparents=None, nchildren=None):
+        types = ("point", "recurrence", "span", "comment")
+        self.conn = connection
+        self.cur = self.conn.cursor()
+        self.nid = nid
+        self.ntype = ntype
+        self.ndata = ndata
+        if self.nid:
+            self._check_record_exists()
+        elif self.ntype in types:
+            self._insert_new_record(nparents, nchildren)
+        else:
+            raise Exception("Unrecognised type")
 
     def _check_record_exists(self):
-        SQL = "SELECT (id) FROM %s WHERE id=?" % self.table
-        cur = self.conn.cursor()
-        cur.execute(SQL, [self.id])
-        qres = cur.fetchall()
-        cur.close()
-        if len(qres) == 0:
+        SQL = "SELECT (id) FROM node WHERE id=?"
+        self.cur.execute(SQL, [self.nid])
+        res = self.cur.fetchall()
+        if len(res) == 0:
             raise Exception("No matching record found :(")
-        elif len(qres) > 1:
-            raise Exception("Table %s has %s records with id %s. What do?" %
-                            (self.table, str(len(qres)), str(self.id)))
 
-    def _insert_new_record(self, kwargs):
-        SQL = "INSERT INTO %s %s VALUES %s"
-        keys_str = "('%s')" % "', '".join(kwargs.keys())
-        values = tuple(kwargs.values())
-        vals_str = "(%s)" % ", ".join(len(values)*("?"))
-        SQL = SQL % (self.table, keys_str, vals_str)
-        cur = self.conn.cursor()
-        cur.execute(SQL, list(values))
+    def _insert_new_record(self, nparents, nchildren):
+        creation_time = time.gmtime()
+        creation_time = calendar.timegm(creation_time)
+        self.cur.execute("INSERT INTO node VALUES ? ? ?", [self.ntype, self.ndata, creation_time])
+        self.nid = self.cur.lastrowid
+        sql = "INSERT INTO relation VALUES (?,?)"
+        for e in nparents:
+            self.cur.execute(sql, [e, self.nid])
+        for e in nchildren:
+            self.cur.execute(sql, [self.nid, e])
         self.conn.commit()
-        object.__setattr__(self, "id", cur.lastrowid)
-        cur.close()
 
-    def __getattr__(self, col):
-        SQL = "SELECT (%s) FROM %s WHERE id=?"
-        SQL = SQL % (col, self.table)
-        cur = self.conn.cursor()
-        cur.execute(SQL, [self.id])
-        res = cur.fetchall()[0][0]
-        cur.close()
-        return res
-
-    def __setattr__(self, col, value):
-        SQL = "UPDATE %s SET %s=? WHERE id=?"
-        SQL = SQL % (self.table, col)
-        cur = self.conn.cursor()
-        cur.execute(SQL, [value, self.id])
-        self.conn.commit()
-        cur.close()
-
-    def __delattr__(self, col):
-        self.__setattr__(col, None)
-
-    def delete(self):
-        SQL = "DELETE FROM %s WHERE id=?" % self.table
-        cur = self.conn.cursor()
-        cur.execute(SQL, [self.id])
-        self.conn.commit()
-        cur.close()
-
-class event(jt_record):
-
-    def __init__(self, row_id=None, **kwargs):
-        jt_record.__init__(self, "event", row_id, **kwargs)
-
-    def _get_members(self, col1, col2):
+    def get_adjacent(self, sql):
+        self.cur.execute(sql, [self.nid])
         res = []
-        SQL = "SELECT (%s) FROM event_map WHERE %s=?" % (col1, col2)
-        cur = self.conn.cursor()
-        cur.execute(SQL, [self.id])
-        ids = cur.fetchall()
-        for e in ids:
-            res.append(event(e[0]))
-        cur.close()
+        for e in self.cur.fetchall():
+            res.append(Node(e[0], e[1]))
         return res
 
     def get_parents(self):
-        return self._get_members("parent", "child")
+        return self.get_adjacent("SELECT parent FROM relation WHERE child=?")
 
     def get_children(self):
-        return self._get_members("child", "parent")
+        return self.get_adjacent("SELECT child FROM relation WHERE parent=?")
 
-class commitment(jt_record):
-
-    def __init__(self, row_id=None, **kwargs):
-        jt_record.__init__(self, "commitment", row_id, **kwargs)
-
-    def get_events(self):
-        res = []
-        SQL = "SELECT event_id FROM commitment_map WHERE id=?"
-        cur = self.conn.cursor()
-        cur.execute(SQL, [self.id])
-        ids = cur.fetchall()
-        for e in ids:
-             res.append(event(e[0]))
-        cur.close()
-        return res
-
-
-
-
+    def delete(self, cascade):
+        sql = "DELETE FROM node WHERE id=?"
+        self.cur.execute(sql, [self.nid])
+        self.conn.commit()
+        self.cur.close()
+        self.nid = self.ntype = self.ndata = self.conn = self.cur = None
