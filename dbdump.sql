@@ -1,4 +1,5 @@
-PRAGMA foreign_keys=OFF;
+PRAGMA foreign_keys=ON;
+PRAGMA encoding = "UTF-8";
 BEGIN TRANSACTION;
 
 CREATE TABLE node (
@@ -6,9 +7,48 @@ CREATE TABLE node (
     type TEXT CONSTRAINT nn NOT NULL,
     data CONSTRAINT nn NOT NULL,
     creation_time INTEGER CONSTRAINT nn NOT NULL);
+INSERT INTO "node" VALUES(1,'recurrence','86400,86400,86400,86400,259200',1393797240);
+INSERT INTO "node" VALUES(2,'comment','Five consecutive days a week',1393797240);
+INSERT INTO "node" VALUES(3,'point',1393828200,1393797268);
+INSERT INTO "node" VALUES(4,'comment','Monday morning 07:30',1393797268);
+INSERT INTO "node" VALUES(5,'span',600,1393797349);
+INSERT INTO "node" VALUES(6,'comment','Clear kitchen',1393797349);
+INSERT INTO "node" VALUES(7,'span',1200,1393797371);
+INSERT INTO "node" VALUES(8,'comment','Eat breakfast',1393797371);
+INSERT INTO "node" VALUES(9,'span',1200,1393797383);
+INSERT INTO "node" VALUES(10,'comment','Wash',1393797383);
+INSERT INTO "node" VALUES(11,'span',600,1393797406);
+INSERT INTO "node" VALUES(12,'comment','Set breakfast',1393797406);
+INSERT INTO "node" VALUES(13,'span',1800,1393797430);
+INSERT INTO "node" VALUES(14,'comment','Exercise',1393797430);
+INSERT INTO "node" VALUES(15,'span',300,1393797452);
+INSERT INTO "node" VALUES(16,'comment','Start breakfast',1393797452);
+INSERT INTO "node" VALUES(17,'span',900,1393797472);
+INSERT INTO "node" VALUES(18,'comment','Quicken',1393797472);
 
 CREATE TABLE relation (
-    parent INTEGER CONSTRAINT nn NOT NULL REFERENCES node(id) ON DELETE CASCADE,
-    child INTEGER CONSTRAINT nn NOT NULL REFERENCES node(id) ON DELETE CASCADE);
+    parent INTEGER CONSTRAINT nn NOT NULL,
+    child INTEGER CONSTRAINT nn NOT NULL,
+    FOREIGN KEY(parent) REFERENCES node(id) ON DELETE CASCADE,
+    FOREIGN KEY(child) REFERENCES node(id) ON DELETE CASCADE);
+INSERT INTO "relation" VALUES(1,2);
+INSERT INTO "relation" VALUES(1,3);
+INSERT INTO "relation" VALUES(3,4);
+INSERT INTO "relation" VALUES(3,5);
+INSERT INTO "relation" VALUES(5,6);
+INSERT INTO "relation" VALUES(5,7);
+INSERT INTO "relation" VALUES(7,8);
+INSERT INTO "relation" VALUES(7,9);
+INSERT INTO "relation" VALUES(9,10);
+INSERT INTO "relation" VALUES(9,11);
+INSERT INTO "relation" VALUES(11,12);
+INSERT INTO "relation" VALUES(11,13);
+INSERT INTO "relation" VALUES(13,14);
+INSERT INTO "relation" VALUES(13,15);
+INSERT INTO "relation" VALUES(15,16);
+INSERT INTO "relation" VALUES(15,17);
+INSERT INTO "relation" VALUES(17,18);
 
+DELETE FROM sqlite_sequence;
+INSERT INTO "sqlite_sequence" VALUES('node',18);
 COMMIT;
