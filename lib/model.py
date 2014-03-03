@@ -18,18 +18,19 @@ def close_db():
     connection.close()
 
 
-def get_roots():
+def get_roots(connection):
     cur = connection.cursor()
     sql = "SELECT id FROM node LEFT OUTER JOIN relation ON node.id = relation.child WHERE relation.child IS NULL"
     rows = cur.execute(sql).fetchall()
     res = []
     for e in rows:
-        res.append(Node(e[0]))
+        res.append(Node(connection, e[0]))
+    cur.close()
     return res
 
 
 class Node(object):
-    def __init__(self, nid=None, ntype=None, ndata=None, nparents=None, nchildren=None, ncomment=None):
+    def __init__(self, connection, nid=None, ntype=None, ndata=None, nparents=None, nchildren=None, ncomment=None):
         self.ntypes = ("P", "R", "S", "C")  # Point, Recurrence, Span, Comment
         self.conn = connection
         self.cur = self.conn.cursor()
@@ -89,7 +90,7 @@ class Node(object):
         self.cur.execute(sql, [self.nid])
         res = []
         for e in self.cur.fetchall():
-            n = Node(e[0])
+            n = Node(self.conn, e[0])
             if (ntypes is None) or (n.ntype in ntypes):
                 res.append(n)
         return res

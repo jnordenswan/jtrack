@@ -1,9 +1,13 @@
 import os
 from lib import model, util
 
-rows, columns = os.popen('stty size', 'r').read().split()
-rows = int(rows)
-columns = int(columns)
+try:
+    rows, columns = os.popen('stty size', 'r').read().split()
+    rows = int(rows)
+    columns = int(columns)
+except Exception:
+    rows = 100
+    columns = 80
 
 
 def print_nodes(nodelist, depth=1):

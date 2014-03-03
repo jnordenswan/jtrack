@@ -3,15 +3,34 @@
 JTrack personal planner
 
 Usage:
-  jt <db> li [<id>]
+  jt <db-file> li [<id>]
 
 """
 from lib.docopt import docopt
-from lib import model, view
+from lib import model, view, util
 from sqlite3 import connect
 
+
+class Controller(object):
+    def __init__(self):
+        self.args = None
+        self.connection = None
+
+    def parse_opts(self, __doc__):
+        self.args = docopt(__doc__)
+
+    def connect_db(self):
+        self.connection = connect(self.args['<db-file>'])
+
+    def transact(self):
+        if self.args['li']:
+            view.print_nodes(model.get_roots(self.connection))
+
+    def node(self, **kwargs):
+        return model.Node(self.connection, kwargs)
+
 if __name__ == '__main__':
-    arguments = docopt(__doc__)
-    conn = connect(arguments['<db>'])
-    if arguments['li']:
-        view.print_tree(conn, arguments)
+    controller = Controller()
+    controller.parse_opts(__doc__)
+    controller.connect_db()
+    controller.transact()
