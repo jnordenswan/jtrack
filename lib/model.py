@@ -14,6 +14,7 @@ def connect_db(file_path):
 
 
 def close_db():
+    global connection
     connection.close()
 
 
@@ -29,7 +30,7 @@ def get_roots():
 
 class Node(object):
     def __init__(self, nid=None, ntype=None, ndata=None, nparents=None, nchildren=None, ncomment=None):
-        self.ntypes = ("point", "recurrence", "span", "comment")
+        self.ntypes = ("P", "R", "S", "C")  # Point, Recurrence, Span, Comment
         self.conn = connection
         self.cur = self.conn.cursor()
         self.nid = nid
@@ -43,8 +44,8 @@ class Node(object):
             raise Exception("Unrecognised type or missing comment")
 
     def _check_record_exists(self):
-        SQL = "SELECT * FROM node WHERE id=?"
-        self.cur.execute(SQL, [self.nid])
+        sql = "SELECT * FROM node WHERE id=?"
+        self.cur.execute(sql, [self.nid])
         res = self.cur.fetchall()
         if len(res) == 0:
             raise Exception("No matching node found :(")
@@ -58,6 +59,12 @@ class Node(object):
             sql = "INSERT INTO node (type, data, creation_time) VALUES (?, ?, ?)"
             self.cur.execute(sql, [self.ntype, self.ndata, creation_time])
             self.nid = self.cur.lastrowid
+            self.ndata = self.ndata.split(',')
+            if self.ntype is "R":
+                ndata = []
+                for e in self.ndata:
+                    ndata.append(int(e))
+                self.ndata = ndata
             sql = "INSERT INTO relation VALUES (?, ?)"
             if nparents:
                 for e in nparents:
@@ -72,19 +79,27 @@ class Node(object):
             self.conn.rollback()
             print(ex)
 
-    def get_parents(self):
-        return self.get_adjacent("SELECT parent FROM relation WHERE child=?")
+    def get_parents(self, ntypes=None):
+        return self.get_adjacent("SELECT parent FROM relation WHERE child=?", ntypes)
 
-    def get_children(self):
-        return self.get_adjacent("SELECT child FROM relation WHERE parent=?")
+    def get_children(self, ntypes=None):
+        return self.get_adjacent("SELECT child FROM relation WHERE parent=?", ntypes)
 
-    def get_adjacent(self, sql):
+    def get_adjacent(self, sql, ntypes=None):
         self.cur.execute(sql, [self.nid])
         res = []
         for e in self.cur.fetchall():
             n = Node(e[0])
-            res.append(n)
+            if (ntypes is None) or (n.ntype in ntypes):
+                res.append(n)
         return res
+
+    def get_first_comment(self):
+        comments = self.get_children("C")
+        if len(comments) > 0:
+            return comments[0].ndata
+        else:
+            return None
 
     def delete(self, cascade=True):
         if cascade:

@@ -1,13 +1,16 @@
 from time import mktime, strptime, localtime, strftime
 
+
 def datify(secs):
     struct = localtime(secs)
     return strftime("%y%m%d-%H%M", struct)
 
+
 def secify(date):
     return int(mktime(strptime(str(date), "%y%m%d-%H%M")))
 
-def int_to_str(encodable, sym_set="0123456789abcdefghijklmnopqrstuvwxyz"):
+
+def int_to_str(encodable, sym_set="0123456789abcdefghijklmnopqrstuvwxyz".upper()):
     sign = ''
     if encodable < 0: sign = '-'
     encodable = abs(encodable)
@@ -18,7 +21,9 @@ def int_to_str(encodable, sym_set="0123456789abcdefghijklmnopqrstuvwxyz"):
         res = res + int_to_str(encodable % l, sym_set)
         return res
 
+
 def str_to_int(decodable, sym_set="0123456789abcdefghijklmnopqrstuvwxyz"):
+    decodable = decodable.lower()
     negative = False
     if decodable[0] == '-':
         negative = True
