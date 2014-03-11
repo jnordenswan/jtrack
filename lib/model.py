@@ -1,83 +1,83 @@
-from sqlite3 import connect
 import time
 import calendar
 
-connection = None
-
-
-def connect_db(file_path):
-    global connection
-    connection = connect(file_path)
-    cur = connection.cursor()
-    cur.execute("PRAGMA foreign_keys=ON")
-    cur.close()
-
-
-def close_db():
-    global connection
-    connection.close()
-
-
-def get_roots(connection):
-    cur = connection.cursor()
-    sql = "SELECT id FROM node LEFT OUTER JOIN relation ON node.id = relation.child WHERE relation.child IS NULL"
-    rows = cur.execute(sql).fetchall()
-    res = []
-    for e in rows:
-        res.append(Node(connection, e[0]))
-    cur.close()
-    return res
-
 
 class Node(object):
-    def __init__(self, connection, nid=None, ntype=None, ndata=None, nparents=None, nchildren=None, ncomment=None):
+    def __init__(self, connection, **kwargs):
+        # Set up tools
         self.ntypes = ("P", "R", "S", "C")  # Point, Recurrence, Span, Comment
         self.conn = connection
         self.cur = self.conn.cursor()
-        self.nid = nid
-        self.ntype = ntype
-        self.ndata = ndata
-        if self.nid:
-            self._check_record_exists()
-        elif (self.ntype in self.ntypes and ncomment) or (self.ntype == "comment"):
-            self._insert_new_record(nparents, nchildren, ncomment)
-        else:
-            raise Exception("Unrecognised type or missing comment")
 
-    def _check_record_exists(self):
+        # Instance variables
+        self.name = None
+        self.ntype = None
+        self.data = None
+        self.creation_time = None
+
+        # Convenience function for evaluating the kwargs validity
+        check_kw = lambda name: name in kwargs.keys() and kwargs['name'] is not None
+
+        # Logic switchyard
+        if check_kw('name'):  # We want to reference an existing node
+            self.mirror_db_node(kwargs['name'])
+        elif check_kw('ntype') and kwargs['ntype'] in self.ntypes and check_kw('data'):  # New node, check premise
+            # Set relatives params to sane values
+            ntype = parents = children = None
+            if check_kw('ntype'):
+                ntype = kwargs['ntype']
+            if check_kw('parents'):
+                parents = kwargs['parents']
+            if check_kw('children'):
+                children = kwargs['children']
+            if ntype in ("P", "R", "S") and check_kw('comment'):  # We want to create a point, recurrence, or span
+                self.insert_db_node(ntype, kwargs['data'], parents, children, kwargs['comment'])
+            elif ntype is "C" and parents:  # We want to create a comment
+                self.insert_db_node(ntype, kwargs['data'], parents, None, None)
+            else:  # We should never end up here
+                raise Exception("We should never end up here")
+        else:  # kwargs are bad :(
+            raise Exception("kwargs are bad :(")
+
+    def mirror_db_node(self, name):
         sql = "SELECT * FROM node WHERE id=?"
-        self.cur.execute(sql, [self.nid])
+        self.cur.execute(sql, [name])
         res = self.cur.fetchall()
         if len(res) == 0:
-            raise Exception("No matching node found :(")
+            raise Exception("No matching node found in db :(")
+        self.name = res[0][0]
         self.ntype = res[0][1]
-        self.ndata = res[0][2]
+        self.data = res[0][2]
+        self.creation_time = res[0][3]
 
-    def _insert_new_record(self, nparents, nchildren, ncomment):
+    def insert_db_node(self, ntype, data, parents, children, comment):
         try:
             creation_time = time.gmtime()
             creation_time = calendar.timegm(creation_time)
             sql = "INSERT INTO node (type, data, creation_time) VALUES (?, ?, ?)"
-            self.cur.execute(sql, [self.ntype, self.ndata, creation_time])
-            self.nid = self.cur.lastrowid
-            self.ndata = self.ndata.split(',')
+            self.cur.execute(sql, [ntype, data, creation_time])
+            self.name = self.cur.lastrowid
+            self.ntype = ntype
+            self.data = data
+            self.creation_time = creation_time
             if self.ntype is "R":
-                ndata = []
-                for e in self.ndata:
-                    ndata.append(int(e))
-                self.ndata = ndata
+                data = []
+                for e in self.ndata.split(','):
+                    data.append(int(e))
+                self.data = data
             sql = "INSERT INTO relation VALUES (?, ?)"
-            if nparents:
-                for e in nparents:
-                    self.cur.execute(sql, [e, self.nid])
-            if nchildren:
-                for e in nchildren:
-                    self.cur.execute(sql, [self.nid, e])
-            if self.ntype is not "comment":
-                Node(ntype="comment", ndata=ncomment, nparents=[self.nid])
+            if parents:
+                for e in parents:
+                    self.cur.execute(sql, [e, self.name])
+            if children:
+                for e in children:
+                    self.cur.execute(sql, [self.name, e])
+            if self.ntype is not "C":
+                Node(self.conn, ntype="C", data=comment, parents=[self.name])
             self.conn.commit()
         except Exception as ex:
             self.conn.rollback()
+            self.name = self.ntype = self.data = self.conn = self.cur = None
             print(ex)
 
     def get_parents(self, ntypes=None):
@@ -110,4 +110,25 @@ class Node(object):
         self.cur.execute(sql, [self.nid])
         self.conn.commit()
         self.cur.close()
-        self.nid = self.ntype = self.ndata = self.conn = self.cur = None
+        self.name = self.ntype = self.data = self.conn = self.cur = None
+
+    def is_root(self):
+        if len(self.get_parents()) is 0:
+            return True
+        else:
+            return False
+
+    def is_leaf(self):
+        if len(self.get_children()) is 0:
+            return True
+        else:
+            return False
+
+    def get_roots(self):
+        res = []
+        for e in self.get_parents():
+            if e.is_root:
+                res.append(e.name)
+            else:
+                return e.get_roots()
+        return res

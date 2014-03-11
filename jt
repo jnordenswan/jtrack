@@ -3,7 +3,8 @@
 JTrack personal planner
 
 Usage:
-  jt <db-file> li [<id>]
+  jt <db-file> l [<id>]
+  jt <db-file> n <type> <data> <comment> [parent]
 
 """
 from lib.docopt import docopt
@@ -23,11 +24,19 @@ class Controller(object):
         self.connection = connect(self.args['<db-file>'])
 
     def transact(self):
-        if self.args['li']:
-            view.print_nodes(model.get_roots(self.connection))
+        if self.args['l']:
+            view.print_subtree(self.roots())
+        if self.args['n']:
+            self.node(ntype=self.args['<type>'],
+                      ndata=self.args['<data>'],
+                      ncomment=self.args['<comment>'],
+                      nparents=(self.args['parent'],))
 
     def node(self, **kwargs):
         return model.Node(self.connection, kwargs)
+
+    def roots(self):
+        return model.get_roots(self.connection)
 
 if __name__ == '__main__':
     controller = Controller()

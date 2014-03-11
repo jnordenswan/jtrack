@@ -10,7 +10,7 @@ except Exception:
     columns = 80
 
 
-def print_nodes(nodelist, depth=1):
+def print_subtree(nodelist, depth=1):
     indent = 2 * (depth - 1)
     header = "%s%s-%s: %s"
     for e in nodelist:
@@ -20,4 +20,4 @@ def print_nodes(nodelist, depth=1):
             print(header % (indent*" ", e.ntype, nid, e.ndata))
             if first_comment:
                 print(("%s" + first_comment) % (indent*" ",))
-        print_nodes(e.get_children(), depth+1)
+        print_subtree(e.get_children(), depth+1)

@@ -49,6 +49,11 @@ INSERT INTO "relation" VALUES(15,16);
 INSERT INTO "relation" VALUES(15,17);
 INSERT INTO "relation" VALUES(17,18);
 
+CREATE TABLE completion (
+    node INTEGER CONSTRAINT nn NOT NULL,
+    completion_time INTEGER CONSTRAINT nn NOT NULL,
+    FOREIGN KEY(node) REFERENCES node(id) ON DELETE CASCADE);
+
 DELETE FROM sqlite_sequence;
 INSERT INTO "sqlite_sequence" VALUES('node',18);
 COMMIT;
