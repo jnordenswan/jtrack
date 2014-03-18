@@ -62,7 +62,7 @@ class Node(object):
             self.creation_time = creation_time
             if self.ntype is "R":
                 data = []
-                for e in self.ndata.split(','):
+                for e in self.data.split(','):
                     data.append(int(e))
                 self.data = data
             sql = "INSERT INTO relation VALUES (?, ?)"
@@ -87,10 +87,10 @@ class Node(object):
         return self.get_adjacent("SELECT child FROM relation WHERE parent=?", ntypes)
 
     def get_adjacent(self, sql, ntypes=None):
-        self.cur.execute(sql, [self.nid])
+        self.cur.execute(sql, [self.name])
         res = []
         for e in self.cur.fetchall():
-            n = Node(self.conn, e[0])
+            n = Node(self.conn, name=e[0])
             if (ntypes is None) or (n.ntype in ntypes):
                 res.append(n)
         return res
@@ -98,7 +98,7 @@ class Node(object):
     def get_first_comment(self):
         comments = self.get_children("C")
         if len(comments) > 0:
-            return comments[0].ndata
+            return comments[0].data
         else:
             return None
 
@@ -107,22 +107,16 @@ class Node(object):
             for e in self.get_children():
                 e.delete(True)
         sql = "DELETE FROM node WHERE id=?"
-        self.cur.execute(sql, [self.nid])
+        self.cur.execute(sql, [self.name])
         self.conn.commit()
         self.cur.close()
         self.name = self.ntype = self.data = self.conn = self.cur = None
 
     def is_root(self):
-        if len(self.get_parents()) is 0:
-            return True
-        else:
-            return False
+        return len(self.get_parents()) is 0
 
     def is_leaf(self):
-        if len(self.get_children()) is 0:
-            return True
-        else:
-            return False
+        return len(self.get_children()) is 0
 
     def get_roots(self):
         res = []

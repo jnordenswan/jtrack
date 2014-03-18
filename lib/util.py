@@ -10,6 +10,10 @@ def secify(date):
     return int(mktime(strptime(str(date), "%y%m%d-%H%M")))
 
 
+def spanify(secs):
+    pass
+
+
 def int_to_str(encodable, sym_set="0123456789abcdefghijklmnopqrstuvwxyz".upper()):
     sign = ''
     if encodable < 0: sign = '-'

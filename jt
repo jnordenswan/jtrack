@@ -8,38 +8,9 @@ Usage:
 
 """
 from lib.docopt import docopt
-from lib import model, view, util
-from sqlite3 import connect
+from lib import controller
 
-
-class Controller(object):
-    def __init__(self):
-        self.args = None
-        self.connection = None
-
-    def parse_opts(self, __doc__):
-        self.args = docopt(__doc__)
-
-    def connect_db(self):
-        self.connection = connect(self.args['<db-file>'])
-
-    def transact(self):
-        if self.args['l']:
-            view.print_subtree(self.roots())
-        if self.args['n']:
-            self.node(ntype=self.args['<type>'],
-                      ndata=self.args['<data>'],
-                      ncomment=self.args['<comment>'],
-                      nparents=(self.args['parent'],))
-
-    def node(self, **kwargs):
-        return model.Node(self.connection, kwargs)
-
-    def roots(self):
-        return model.get_roots(self.connection)
 
 if __name__ == '__main__':
-    controller = Controller()
-    controller.parse_opts(__doc__)
-    controller.connect_db()
-    controller.transact()
+    cl_args = docopt(__doc__)
+    contr = controller.Controller(cl_args)
