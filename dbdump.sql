@@ -49,10 +49,18 @@ INSERT INTO "relation" VALUES(15,16);
 INSERT INTO "relation" VALUES(15,17);
 INSERT INTO "relation" VALUES(17,18);
 
-CREATE TABLE completion (
-    node INTEGER CONSTRAINT nn NOT NULL,
-    completion_time INTEGER CONSTRAINT nn NOT NULL,
-    FOREIGN KEY(node) REFERENCES node(id) ON DELETE CASCADE);
+CREATE TABLE commitment (
+    id INTEGER CONSTRAINT pk PRIMARY KEY ASC AUTOINCREMENT,
+    start_time INTEGER CONSTRAINT nn NOT NULL,
+    end_time INTEGER CONSTRAINT nn NOT NULL,
+    draft INTEGER CONSTRAINT nn NOT NULL);
+
+CREATE TABLE commitlet (
+    commitment_id INTEGER CONSTRAINT nn NOT NULL,
+    node_id INTEGER CONSTRAINT nn NOT NULL,
+    pass INTEGER,
+    FOREIGN KEY(commitment_id) REFERENCES commitment(id) ON DELETE CASCADE,
+    FOREIGN KEY(node_id) REFERENCES node(id) ON DELETE CASCADE);
 
 DELETE FROM sqlite_sequence;
 INSERT INTO "sqlite_sequence" VALUES('node',18);

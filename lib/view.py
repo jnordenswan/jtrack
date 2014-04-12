@@ -21,3 +21,13 @@ def print_subtree(nodelist, depth=1):
             if first_comment:
                 print(("%s" + first_comment) % (indent*" ",))
         print_subtree(e.get_children(), depth+1)
+
+
+def print_agenda(nodelist, start_date, end_date=None):
+    start_secs = util.secify(start_date)
+    if end_date:
+        end_secs = util.secify(end_date)
+    else:
+        end_secs = start_secs + 86400
+    filtered = []
+    for n in nodelist:
