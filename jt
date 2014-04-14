@@ -3,7 +3,7 @@
 JTrack personal planner
 
 Usage:
-  jt node new <type> <data> <comment> -p <parent>... -c <child>...
+  jt node new <type> <data> <comment> [-p <parent>...] [-c <child>...]
   jt node view <id>
   jt node edit <id> <data> -ap <parent> -dp <parent> -ac <child> -dc <child>
   jt node delete <id>
@@ -17,8 +17,9 @@ Usage:
   jt db <path>
 """
 from lib.docopt import docopt
-#from lib import controller
+from lib import controller
 from os.path import realpath
+from sqlite3 import connect
 
 db_path = '/home/johan/media/code/jtrack/data/johan.db'
 
@@ -41,20 +42,21 @@ def set_db(path):
 
 if __name__ == '__main__':
     args = docopt(__doc__)
+    if args['db']: set_db(args['<path>'])
+    else: controller.conn = connect(db_path)
     if args['node']:
-        if args['new']: controller.new_node(args['type'], args['data'], args['comment'], args['parent'], args['child'])
-        elif args['view']: controller.view_node(args['id'])
-        elif args['edit']: controller.edit_node(args['id'], args['data'], args[''])  # TODO: Finish this
-        elif args['delete']: controller.delete_node(args['id'])
+        if args['new']: controller.new_node(args['<type>'], args['<data>'], args['<comment>'], args['<parent>'], args['<child>'])
+        elif args['view']: controller.view_node(args['<id>'])
+        elif args['edit']: controller.edit_node(args['<id>'], args['<data>'], args[''])  # TODO: Finish this line
+        elif args['delete']: controller.delete_node(args['<id>'])
         else: print_usage_and_fail()
     elif args['comm']:
         if args['view']: controller.view_commitment()
         elif args['push']: controller.push_commitment()
-        elif args['drop']: controller.drop_commitlet(args['id'])
-        elif args['pass']: controller.pass_commitlet(args['id'])
-        elif args[fail]: controller.fail_commitlet(args['id'])
+        elif args['drop']: controller.drop_commitlet(args['<id>'])
+        elif args['pass']: controller.pass_commitlet(args['<id>'])
+        elif args[fail]: controller.fail_commitlet(args['<id>'])
         else: print_usage_and_fail()
-    elif args['cal']: controller.print_calendar(args['start'], args['end'])
+    elif args['cal']: controller.print_calendar(args['<start>'], args['<end>'])
     elif args['roots']: controller.print_roots()
-    elif args['db']: set_db(args['<path>'])
     else: print_usage_and_fail()

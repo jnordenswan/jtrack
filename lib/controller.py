@@ -1,6 +1,17 @@
-from sqlite3 import connect
 from lib import model, view
 
+conn = None
+
+def node(**kwargs):
+    return model.Node(conn, **kwargs)
+
+def new_node(ntype, data, comment, parents, children):
+    new = node(ntype=ntype,
+               data=data,
+               comment=comment,
+               parents=parents,
+               children=children)
+    view.print_subtree(new.get_roots())
 
 class Controller(object):
     def __init__(self, cl_args):

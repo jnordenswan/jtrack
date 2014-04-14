@@ -16,7 +16,7 @@ class Node(object):
         self.creation_time = None
 
         # Convenience function for evaluating the kwargs validity
-        check_kw = lambda name: name in kwargs.keys() and kwargs['name'] is not None
+        check_kw = lambda name: name in kwargs.keys() and kwargs[name] is not None
 
         # Logic switchyard
         if check_kw('name'):  # We want to reference an existing node
@@ -120,9 +120,12 @@ class Node(object):
 
     def get_roots(self):
         res = []
-        for e in self.get_parents():
-            if e.is_root:
-                res.append(e.name)
-            else:
-                return e.get_roots()
+        if self.is_root:
+            res = [self]
+        else:
+            for e in self.get_parents():
+                if e.is_root:
+                    res.append(e.name)
+                else:
+                    return e.get_roots()
         return res
