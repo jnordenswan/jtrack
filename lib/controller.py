@@ -1,4 +1,4 @@
-from lib import model, view
+from lib import model, view, util
 
 conn = None
 
@@ -12,6 +12,27 @@ def new_node(ntype, data, comment, parents, children):
                parents=parents,
                children=children)
     view.print_subtree(new.get_roots())
+
+def view_node(name):
+    n = node(name=util.str_to_int(name))
+    roots = n.get_roots()
+    view.print_subtree(roots)
+
+def delete_node(name):
+    n = node(name=util.str_to_int(name))
+    n.delete()
+
+def get_roots():
+    cur = conn.cursor()
+    sql = "SELECT id FROM node LEFT OUTER JOIN relation ON node.id = relation.child WHERE relation.child IS NULL"
+    rows = cur.execute(sql).fetchall()
+    res = []
+    for e in rows:
+        name = e[0]
+        res.append(self.node(name=name))
+    cur.close()
+    return res
+
 
 class Controller(object):
     def __init__(self, cl_args):
@@ -38,6 +59,3 @@ class Controller(object):
             res.append(self.node(name=name))
         cur.close()
         return res
-
-    def node(self, **kwargs):
-        return model.Node(self.connection, **kwargs)

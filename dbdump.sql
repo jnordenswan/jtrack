@@ -58,7 +58,7 @@ CREATE TABLE commitment (
 CREATE TABLE commitlet (
     commitment_id INTEGER CONSTRAINT nn NOT NULL,
     node_id INTEGER CONSTRAINT nn NOT NULL,
-    pass INTEGER,
+    pass INTEGER CONSTRAINT df DEFAULT NULL,
     FOREIGN KEY(commitment_id) REFERENCES commitment(id) ON DELETE CASCADE,
     FOREIGN KEY(node_id) REFERENCES node(id) ON DELETE CASCADE);
 

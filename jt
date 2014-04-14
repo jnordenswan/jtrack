@@ -43,7 +43,9 @@ def set_db(path):
 if __name__ == '__main__':
     args = docopt(__doc__)
     if args['db']: set_db(args['<path>'])
-    else: controller.conn = connect(db_path)
+    else:
+        controller.conn = connect(db_path)
+        controller.conn.execute("PRAGMA foreign_keys = ON;")
     if args['node']:
         if args['new']: controller.new_node(args['<type>'], args['<data>'], args['<comment>'], args['<parent>'], args['<child>'])
         elif args['view']: controller.view_node(args['<id>'])

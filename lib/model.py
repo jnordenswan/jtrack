@@ -120,12 +120,12 @@ class Node(object):
 
     def get_roots(self):
         res = []
-        if self.is_root:
+        if self.is_root():
             res = [self]
         else:
             for e in self.get_parents():
-                if e.is_root:
-                    res.append(e.name)
+                if e.is_root():
+                    res.append(e)
                 else:
                     return e.get_roots()
         return res
