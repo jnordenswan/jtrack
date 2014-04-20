@@ -12,12 +12,14 @@ except Exception:
 
 def print_subtree(nodelist, depth=1):
     indent = 2 * (depth - 1)
-    header = "%s%s-%s: %s"
+    header = "%s%s-%s: %s %s"
     for e in nodelist:
         if e.ntype in "PSR":
+            routine = ''
+            if e.routine: routine = 'ROUTINE'
             first_comment = e.get_first_comment()
             name = util.int_to_str(e.name).zfill(3)
-            print(header % (indent*" ", e.ntype, name, e.data))
+            print(header % (indent*" ", e.ntype, name, e.data, routine))
             if first_comment:
                 print(("%s" + first_comment) % (indent*" ",))
         print_subtree(e.get_children(), depth + 1)

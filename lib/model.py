@@ -13,7 +13,7 @@ class Node(object):
         self.name = None
         self.ntype = None
         self.data = None
-        self.creation_time = None
+        self.routine = None
 
         # Convenience function for evaluating the kwargs validity
         check_kw = lambda name: name in kwargs.keys() and kwargs[name] is not None
@@ -30,8 +30,10 @@ class Node(object):
                 parents = kwargs['parents']
             if check_kw('children'):
                 children = kwargs['children']
+            if check_kw('routine'):
+                routine = kwargs['routine']
             if ntype in ("P", "R", "S") and check_kw('comment'):  # We want to create a point, recurrence, or span
-                self.insert_db_node(ntype, kwargs['data'], parents, children, kwargs['comment'])
+                self.insert_db_node(ntype, kwargs['data'], parents, children, kwargs['comment'], routine)
             elif ntype is "C" and parents:  # We want to create a comment
                 self.insert_db_node(ntype, kwargs['data'], parents, None, None)
             else:  # We should never end up here
@@ -48,18 +50,16 @@ class Node(object):
         self.name = res[0][0]
         self.ntype = res[0][1]
         self.data = res[0][2]
-        self.creation_time = res[0][3]
+        self.routine = bool(res[0][3])
 
-    def insert_db_node(self, ntype, data, parents, children, comment):
+    def insert_db_node(self, ntype, data, parents, children, comment, routine):
         try:
-            creation_time = time.gmtime()
-            creation_time = calendar.timegm(creation_time)
             sql = "INSERT INTO node (type, data, creation_time) VALUES (?, ?, ?)"
-            self.cur.execute(sql, [ntype, data, creation_time])
+            self.cur.execute(sql, [ntype, data, routine])
             self.name = self.cur.lastrowid
             self.ntype = ntype
             self.data = data
-            self.creation_time = creation_time
+            self.routine = routine
             if self.ntype is "R":
                 data = []
                 for e in self.data.split(','):
@@ -115,8 +115,12 @@ class Node(object):
     def is_root(self):
         return len(self.get_parents()) is 0
 
-    def is_leaf(self):
-        return len(self.get_children()) is 0
+    def is_leaf(self, consider_comments=False):
+        if consider_comments:
+            res = len(self.get_children()) is 0
+        else:
+            res = len(self.get_children(ntypes="PRS")) is 0
+        return res
 
     def get_roots(self):
         res = []
@@ -129,3 +133,31 @@ class Node(object):
                 else:
                     return e.get_roots()
         return res
+
+    def get_recurrences(self):
+        res = []
+        if self.ntype is 'R':
+            res += [self]
+        for n in self.get_parents():
+            res += n.get_recurrences()
+        return res
+
+    def get_leaves(self):
+        res = []
+        if self.is_leaf():
+            res = [self]
+        else:
+            for n in self.get_children(ntypes='PRS'):
+                res += n.get_leaves()
+        return res
+
+    def get_commitlets(self):
+        pass
+
+
+class Commitment(object):
+    pass
+
+
+class Commitlet(object):
+    pass

@@ -3,16 +3,17 @@
 JTrack personal planner
 
 Usage:
-  jt node new <type> <data> <comment> [-p <parent>...] [-c <child>...]
+  jt node new <type> <data> <comment> [-p <parent>...] [-c <child>...] [-r]
   jt node view <id>
-  jt node edit <id> <data> -ap <parent> -dp <parent> -ac <child> -dc <child>
+  jt node edit <id> <data> -ap <parent> -dp <parent> -ac <child> -dc <child> [-r]
   jt node delete <id>
   jt comm view
   jt comm push
+  jt comm delete
   jt comm drop <id>
   jt comm pass <id>
   jt comm fail <id>
-  jt cal <start> <end>
+  jt cal <start> [<end>]
   jt roots
   jt db <path>
 """
